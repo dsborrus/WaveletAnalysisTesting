@@ -3,7 +3,7 @@ clear; close all;
 
 %% Parameters
 
-P.tmax = 12;   % maximum simulation time in secconds
+P.tmax = 20;   % maximum simulation time in secconds
 P.dt   = 0.001; % time step
 P.t    = 0:P.dt:P.tmax-P.dt; % time array
 P.tct  = [0:P.dt:P.tmax-P.dt+(180*P.dt)]'; % time array for convoluted 
@@ -12,8 +12,8 @@ P.tct  = [0:P.dt:P.tmax-P.dt+(180*P.dt)]'; % time array for convoluted
 
 P.N    = 10;   % number of neurons
 P.p    = 1;    % period of spiking
-P.vp   = 0;    % STD of spiking
-P.buf  = 2;    % amount of buffer time before/after spiking
+P.vp   = 0.2;    % STD of spiking
+P.buf  = 5;    % amount of buffer time before/after spiking
 
 %% Presim calculations and initializations
 
@@ -37,21 +37,42 @@ end
 [ctrain2,~,~] = Convolut_custom(sumt2,P);
 
 % Do the cross correlation
-
-
-%[cfs,frq] = Wanal(ctrain,P);
+[corrCo,lags,trimdsignals] = CrossThem(ctrain1,ctrain2,P);
 
 %% Figure
 
-% defunct figure. Wavelet stuff
-if 0
+if 1
     
     figure('Position',[100 100 1000 700])
-    subplot(1,4,1)
-
-
+    subplot(3,3,[1 3])
+    plot(P.t,sumt1+max(sumt2)+1,'b',P.t,sumt2,'r','linewidth',2);
+    title('Two spike trains')
+    legend('Binary input to neuron 1','Binary input to neuron 2')
+    xlim([0 P.tmax])
+    subplot(3,3,5)
+    plot(fil,'k');
+    title('Alpha function, or "The perfect EPSP"')
+    set(gca,'XTick',[], 'YTick', []);
+    subplot(3,3,[7 9])
+    plot(P.tct,ctrain1+max(ctrain2)*1.2,'b',P.tct,ctrain2,'r','linewidth',2);
+    title('Convoluted signal, i.e. the synaptic input')
+    legend('Input to neuron 1','Input to neuron 2')
+    xlim([0 P.tmax]) 
+    saveas(gcf,'introduction','png'); %close
+    
+    
+    figure('Position',[500 100 1000 700])
+    subplot(2,1,1);
+    plot(P.buf:P.dt:P.tmax-P.buf+180*P.dt,trimdsignals.X+max(trimdsignals.Y)*1.2,'b',...
+         P.buf:P.dt:P.tmax-P.buf+180*P.dt,trimdsignals.Y,'r','linewidth',2)
+    legend('trimmed signal 1','trimmed signal 2')
+    xlim([P.buf P.tmax-P.buf+0.3])
+    subplot(2,1,2);
+    plot(lags,corrCo)
+    title('Cross coorelation')
+    saveas(gcf,'crossCo','png');
+    
 end
-
 
 %% Functions
 
@@ -129,54 +150,27 @@ Out.n = n;
 
 end
 
-function [cfs,frq] = Wanal(ctrain,P)
+function [C,lags,trimdsignals] = CrossThem(x1,x2,P)
 
-% figure('Position',[100 700 1000 700])
-% subplot(2,1,1); hold on;
-% plot(P.dt:P.dt:length(ctrain)*P.dt,ctrain);
-% title('Network Activity')
-% ylabel('')
-% axis tight
-% ax1 = gca;
-% ax1.Position=ax1.Position - [0 0 .1 0];
-% dim = [0.82 0.6 0.3 0.3];
-% str = {[mat2str(P.N) ' neurons'],['Period = ' mat2str(P.p) ' sec'],['St. Dev. = ' mat2str(P.vp) ' sec'],['Decay = ' mat2str(P.dcay) ' msec']};
-% annotation('textbox',dim,'String',str,'FitBoxToText','on','edgecolor','k');
+% trim the signals to only the important stuff
+X = x1(P.buf/P.dt:end-P.buf/P.dt);
+Y = x2(P.buf/P.dt:end-P.buf/P.dt);
 
-% subplot(2,1,2); hold on;
-[cfs,frq]= cwt(ctrain,'amor',1/P.dt);
-%cwt(ctrain,'morse',1000);
-% 
-% Fs = 1000;
-% tms = (0:numel(ctrain)-1)/Fs;
-% %subplot(2,1,2)
-% surface(tms,frq,abs(cfs))
-% title('Wavelet Scalogram')
-% axis tight
-% shading flat
-% xlabel('Time (s)')
-% ylabel('Frequency (Hz)')
-% ylim([4 64])
-% set(gca,'yscale','log')
-% yticks([4 16 64])
-% ax2 = gca;
-% ax2.Position=ax2.Position - [0 0 .1 0];
-% 
-% Ytick = strsplit(num2str(get(gca, 'Ytick')));
-% set(gca,'YtickLabel', Ytick);
+% do the xcorr
+[C,lags] = xcorr(X,Y,'normalized');
 
+% adjust scale of time step
+lags = lags*P.dt;
 
-% 
+% prepare for output
+trimdsignals.X = X;
+trimdsignals.Y = Y;
 
-% 
-% cb=colorbar('location','EastOutside');
-% cb.Position=cb.Position + [.1 0 0 0];
-
-% 
-% set(findall(gcf,'-property','FontSize'),'FontSize',20)
-%wavelet(Y,DT,PAD,DJ,S0,J1,MOTHER,PARAM)
-%WAVE = wavelet(ctrain,.001);
-
-
+% debuggin figure
+if 0 
+    figure
+    plot(X); hold on
+    plot(Y)
+end
 
 end
