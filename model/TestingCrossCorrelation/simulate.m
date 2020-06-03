@@ -89,6 +89,7 @@ if 1
     title('Convoluted signal, i.e. the synaptic input')
     legend('Input to neuron 1','Input to neuron 2')
     xlim([0 P.tmax]) 
+    xlabel('Time (s)')
     saveas(gcf,'introduction','png'); %close
     
     
@@ -98,11 +99,13 @@ if 1
          P.buf:P.dt:P.tmax-P.buf+180*P.dt,trimdsignals.Y,'r','linewidth',2)
     legend('trimmed signal 1','trimmed signal 2')
     xlim([P.buf P.tmax-P.buf+0.3])
+    xlabel('Time (s)')
     subplot(2,1,2);
     plot(lags,corrCo)
     title('Cross coorelation')
+    xlabel('Lag (s)')
     saveas(gcf,'crossCo','png');
-    
+        
 end
 
 %% Functions
@@ -184,7 +187,7 @@ function [t2] = JitterTrain(t1,P)
     t2 = zeros(length(t1),1);
     t2(y) = 1;
     
-    if 1
+    if 0
         figure
         plot(P.t,t1); hold on;
         plot(P.t,t2);
