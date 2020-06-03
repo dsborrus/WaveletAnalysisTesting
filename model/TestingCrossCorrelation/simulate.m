@@ -28,7 +28,8 @@ P.vp   = 2;    % STD of spiking
 P.lambda = 0.2; % average timing between spikes in seconds 
 P.jit    = 0.1; % std to jitter spike timings
 
-P.buf  = 5;    % amount of buffer time before/after spiking
+P.buf  = 5;    % amount of buffer time before/after spiking. Recommend a 
+               % healthy window
 
 %% Presim calculations and initializations
 
@@ -61,6 +62,14 @@ switch P.traintoggle
     case 3
     [sumt1] = GenSpikPoisT(P);
     [sumt2] = GenSpikPoisT(P);
+end
+
+% it's possible t1 and t2 are different sizes if its the poisson trains
+% just need to fix that
+if length(sumt1)~=length(sumt2) 
+    m = min([length(sumt1) length(sumt2)]);
+    sumt1 = sumt1(1:m);
+    sumt2 = sumt2(1:m);
 end
 
 % convule the spike trains an alpha function
